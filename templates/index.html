@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Options Pricing Calculator</title>
+    <script src = "https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel = 'stylesheet' href = "{{ url_for('static', filename = 'style.css') }}">
+</head>
+<body>
+    <div class = "container">
+
+        <h1>Options Pricing Calculator</h1>
+        <p class = "subtitle">Black-Scholes pricing engine with Greeks and payoff visualization</p>
+
+        <nav>
+            <a href = "/">Calculator</a>
+            <a href = "/compare">Compare to Market</a>
+        </nav>
+
+        <div class = "card">
+            <form method = "POST">
+                <label for = "stock_price">Stock Price ($):</label>
+                <input type = "number" step = "0.01" name = "stock_price" id = "stock_price" value = "{{ request.form.get('stock_price', '') }}" required><br><br>
+
+                <label for = "strike_price">Strike Price ($):</label>
+                <input type = "number" step = "0.01" name ="strike_price" id = "strike_price" value = "{{ request.form.get('strike_price', '') }}" required><br><br>
+
+                <label for = "expiry_time">Time to Expiry (in days):</label>
+                <input type = "number" step = "0.01" name = "expiry_time" id = "expiry_time"  value = "{{ request.form.get('expiry_time', '') }}" required><br><br>
+
+                <label for = "interest_rate">Risk-Free Interest Rate (as decimal, e.g. 0.05 for 5%):</label>
+                <input type = "number" step = "0.001" name = "interest_rate" id = "interest_rate" value = "{{ request.form.get('interest_rate', '') }}" required><br><br>
+
+                <label for = "volatility">Volatility: </label>
+                <input type = "number" step = "0.001" name = "volatility" id = "volatility"  value = "{{ request.form.get('volatility', '') }}" required><br><br>
+
+                <button type = "submit">Calculate</button>
+            </form>
+        </div>
+
+        {% if results %}
+            <h2>Results</h2>
+            <div class="results-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Call Price</div>
+                    <div class="metric-value">${{ "%.2f"|format(results.call_price) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Put Price</div>
+                    <div class="metric-value">${{ "%.2f"|format(results.put_price) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Delta (Call)</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.delta_call) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Delta (Put)</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.delta_put) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Gamma</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.gamma) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Vega</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.vega) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Theta (Call)</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.theta_call) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Theta (Put)</div>
+                    <div class="metric-value">{{ "%.4f"|format(results.theta_put) }}</div>
+                </div>
+            </div>
+
+            <div class = "chart-card">
+                <h2>Payoff Diagram (Call Option)</h2>
+                <div style = "max-width: 700px;">
+                    <canvas id = "payoffChart"></canvas>
+                </div>
+            </div>
+
+            <div class = "chart-card">
+                <h2>Payoff Diagram (Put Option)</h2>
+                <div style = "max-width: 700px;">
+                    <canvas id = "payoffChart2"></canvas>
+                </div>
+            </div>
+
+            <script>
+                const darkChartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Stock Price at Expiry ($)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Profit/Loss ($)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                };
+
+                const prices = {{ results.call_prices | tojson }};
+                const profits = {{ results.call_profits | tojson }};
+
+                new Chart(document.getElementById('payoffChart'), {
+                    type: 'line',
+                    data: {
+                        labels: prices,
+                        datasets: [{
+                            label: 'Profit/Loss ($)',
+                            data: profits,
+                            borderColor: '#60a5fa',
+                            fill: false
+                        }]
+                    },
+                    options: darkChartOptions
+                });
+
+                const putPrices = {{ results.put_prices | tojson }};
+                const putProfits = {{ results.put_profits | tojson }};
+
+                new Chart(document.getElementById('payoffChart2'), {
+                    type: 'line',
+                    data: {
+                        labels: putPrices,
+                        datasets: [{
+                            label: 'Profit/Loss ($)',
+                            data: putProfits,
+                            borderColor: '#f87171',
+                            fill: false
+                        }]
+                    },
+                    options: darkChartOptions
+                });
+            </script>
+        {% endif %}
+    </div>
+</body>
+</html>

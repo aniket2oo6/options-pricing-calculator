@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Options Price Comparison</title>
+    <link rel = "stylesheet" href = "{{ url_for('static', filename = 'style.css') }}">
+</head>
+<body>
+    <div class = "container">
+        <h1>Compare Your Price vs Real Market Price</h1>
+        <p class = "subtitle">Black-Scholes price vs live options chain data</p>
+
+        <nav>
+            <a href = "/">Calculator</a>
+            <a href = "/compare">Compare to Market</a>
+        </nav>
+
+        <div class = "card">
+            <form method="POST">
+                <label for="ticker">Stock Ticker (e.g. AAPL):</label>
+                <input type="text" name="ticker" id="ticker" value = "{{ request.form.get('ticker', '') }}" required>
+                <button type="submit">Compare</button>
+            </form>
+        </div>
+
+        {% if error %}
+            <div class = "error-box">{{ error }}</div>
+        {% endif %}
+
+        {% if comparison %}
+            <div class="card">
+                <h2>Results for {{ comparison.symbol }}</h2>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Current Stock Price</span>
+                    <span class="comparison-value">${{ comparison.current_price }}</span>
+                </div>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Strike Used</span>
+                    <span class="comparison-value">${{ comparison.strike }}</span>
+                </div>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Expiry Date</span>
+                    <span class="comparison-value">{{ comparison.expiry }}</span>
+                </div>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Your Calculated Price</span>
+                    <span class="comparison-value">${{ comparison.my_price }}</span>
+                </div>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Real Market Price</span>
+                    <span class="comparison-value">${{ comparison.market_price }}</span>
+                </div>
+
+                <div class="comparison-row">
+                    <span class="comparison-label">Difference</span>
+                    <span class="comparison-value {% if comparison.difference >= 0 %}positive{% else %}negative{% endif %}">
+                        ${{ comparison.difference }}
+                    </span>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
